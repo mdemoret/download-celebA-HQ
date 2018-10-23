@@ -153,21 +153,15 @@ def process_func(idx):
 
 
 def do_the_work(img_num):
-    #global pbar
     # print('Create image number {}'.format(img_num))
     img = process_func(img_num)
     np.save(os.path.join(delta_dir, 'imgHQ%05d' % img_num), [img])
 
-    #pbar.update()
-
-# for img_num in range(expected_dat):
-#     do_the_work(img_num)
-
 num_workers = mp.cpu_count() - 1
 print('Starting a pool with {} workers'.format(num_workers))
 
-pbar = tqdm(total=expected_dat)
-
+#Create progress bar and set smoothing lower to even out wild range of ETA given.
+pbar = tqdm(total=expected_dat, smoothing=0.1) 
 
 def updateProgress(*a):
     # note: input comes from async `wrapMyFunc`
@@ -177,9 +171,8 @@ def updateProgress(*a):
 with mp.Pool(processes=num_workers) as pool:
 
     for i in range(expected_dat):
-        pool.apply_async(do_the_work, args=(i,), callback=update)
+        pool.apply_async(do_the_work, args=(i,), callback=updateProgress)
 
-    #pool.map(do_the_work, list(range(expected_dat)))
     pool.close()
     pool.join()
 
