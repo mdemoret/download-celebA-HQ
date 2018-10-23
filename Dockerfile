@@ -10,8 +10,8 @@ RUN pip install opencv-python==3.4.0.12 cryptography==2.1.4
 
 COPY . /workspace
 
-WORKDIR /data
+WORKDIR /workspace
 
-CMD python /workspace/download_celebA.py ./ && \
-    python /workspace/download_celebA_HQ.py ./ && \
-    python /workspace/make_HQ_images.py ./
+CMD python ./download_celebA.py /data && \
+    python ./download_celebA_HQ.py /data && \
+    python ./make_HQ_images.py /data
