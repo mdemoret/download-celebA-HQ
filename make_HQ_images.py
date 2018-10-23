@@ -2,7 +2,7 @@ import glob
 import os
 import PIL
 import hashlib
-import tqdm
+
 import numpy as np
 from PIL import Image
 import cryptography.hazmat.primitives.hashes
@@ -13,6 +13,7 @@ import base64
 import bz2
 import scipy
 from scipy import ndimage
+from tqdm import tqdm, trange
 import multiprocessing as mp
 import argparse
 
@@ -152,12 +153,12 @@ def process_func(idx):
 
 
 def do_the_work(img_num):
-    global pbar
+    #global pbar
     # print('Create image number {}'.format(img_num))
     img = process_func(img_num)
     np.save(os.path.join(delta_dir, 'imgHQ%05d' % img_num), [img])
 
-    pbar.update()
+    #pbar.update()
 
 # for img_num in range(expected_dat):
 #     do_the_work(img_num)
@@ -167,8 +168,22 @@ print('Starting a pool with {} workers'.format(num_workers))
 
 pbar = tqdm(total=expected_dat)
 
+
+def updateProgress(*a):
+    # note: input comes from async `wrapMyFunc`
+    #res[i] = ans  # put answer into correct index of result list
+    pbar.update()
+
 with mp.Pool(processes=num_workers) as pool:
-    pool.map(do_the_work, list(range(expected_dat)))
+
+    for i in range(expected_dat):
+        pool.apply_async(do_the_work, args=(i,), callback=update)
+
+    #pool.map(do_the_work, list(range(expected_dat)))
+    pool.close()
+    pool.join()
+
+pbar.close()
 
 if len(glob.glob(os.path.join(delta_dir, '*.npy'))) != 30000:
     raise ValueError('Expected to find {} npy files\n Something went wrong!'.format(30000))
