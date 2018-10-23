@@ -2,6 +2,7 @@ import glob
 import os
 import PIL
 import hashlib
+import tqdm
 import numpy as np
 from PIL import Image
 import cryptography.hazmat.primitives.hashes
@@ -151,20 +152,29 @@ def process_func(idx):
 
 
 def do_the_work(img_num):
-    print('Create image number {}'.format(img_num))
+    global pbar
+    # print('Create image number {}'.format(img_num))
     img = process_func(img_num)
     np.save(os.path.join(delta_dir, 'imgHQ%05d' % img_num), [img])
+
+    pbar.update()
 
 # for img_num in range(expected_dat):
 #     do_the_work(img_num)
 
 num_workers = mp.cpu_count() - 1
 print('Starting a pool with {} workers'.format(num_workers))
+
+pbar = tqdm(total=expected_dat)
+
 with mp.Pool(processes=num_workers) as pool:
     pool.map(do_the_work, list(range(expected_dat)))
+
 if len(glob.glob(os.path.join(delta_dir, '*.npy'))) != 30000:
     raise ValueError('Expected to find {} npy files\n Something went wrong!'.format(30000))
+
 # Remove the dat files
 for filepath in glob.glob(os.path.join(delta_dir, '*.dat')):
     os.remove(filepath)
+
 print('All done! Congratulations!')
